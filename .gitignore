@@ -1,3 +1,7 @@
+# Project specific
+mypy_report.xml
+ruff_report.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
