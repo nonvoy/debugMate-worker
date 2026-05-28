@@ -5,8 +5,8 @@ from celery import Celery
 from src.config.basic_config import get_config
 from src.config.logger import get_logger
 from src.core.events import normalize_event
-from src.services.search.open_search_client import get_opensearch_client
 from src.services.search.indexes.events import index_events
+from src.services.search.open_search_client import get_opensearch_client
 
 config = get_config()
 logger = get_logger(__name__)
@@ -16,6 +16,13 @@ broker_transport_options = {
     "visibility_timeout": config.celery.visibility_timeout,
     "polling_interval": config.celery.polling_interval,
 }
+
+if config.environment != "local":
+    broker_transport_options["predefined_queues"] = {
+        config.celery.queue_name: {
+            "url": config.celery.queue_url,
+        },
+    }
 
 if config.celery.endpoint_url:
     broker_transport_options["endpoint_url"] = config.celery.endpoint_url

@@ -40,6 +40,7 @@ class CeleryConfig(BaseModel):
     visibility_timeout: PositiveInt = Field(default=3600, description="Visibility timeout for tasks in seconds")
     polling_interval: PositiveInt = Field(default=5, description="Polling interval for the broker in seconds")
     queue_name: str = Field(default="debugmate-queue", description="Name of the Celery task queue")
+    queue_url: str = Field(..., description="URL of the Celery task queue")
 
 
 class BasicConfig(BaseSettings):
@@ -47,6 +48,7 @@ class BasicConfig(BaseSettings):
 
     debug: bool = Field(default=False, description="Enable debug mode")
     log_level: str = Field(default="INFO", description="Logging level for the application")
+    environment: str = Field(default="production", description="Environment in which the application is running")
     celery: CeleryConfig = Field(default_factory=CeleryConfig, description="Celery configuration")  # type: ignore[arg-type]
     opensearch: OpenSearchConfig = Field(default_factory=OpenSearchConfig, description="OpenSearch configuration")  # type: ignore[arg-type]
 
