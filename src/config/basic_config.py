@@ -4,6 +4,23 @@ from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+
+class OpenSearchConfig(BaseModel):
+    """Configuration for OpenSearch."""
+
+    url: str = Field(..., description="URL of the OpenSearch cluster")
+    username: str | None = Field(default=None, description="Username for OpenSearch authentication")
+    password: str | None = Field(default=None, description="Password for OpenSearch authentication")
+    use_ssl: bool = Field(default=True, description="Use SSL for OpenSearch connection")
+    verify_certs: bool = Field(default=True, description="Verify SSL certificates for OpenSearch connection")
+    ssl_assert_hostname: bool = Field(default=True, description="Assert hostname for SSL connection")
+    ssl_show_warn: bool = Field(default=True, description="Show SSL warnings")
+    http_compress: bool = Field(default=True, description="Enable HTTP compression for OpenSearch connection")
+    timeout: int = Field(default=30, description="Timeout for OpenSearch connection in seconds")
+    max_retries: int = Field(default=3, description="Maximum number of retries for OpenSearch connection")
+    retry_on_timeout: bool = Field(default=True, description="Retry on timeout for OpenSearch connection")
+
+
 class CeleryConfig(BaseModel):
     """Configuration for Celery."""
 
@@ -24,6 +41,7 @@ class BasicConfig(BaseSettings):
     debug: bool = Field(default=False, description="Enable debug mode")
     log_level: str = Field(default="INFO", description="Logging level for the application")
     celery: CeleryConfig = Field(default_factory=CeleryConfig, description="Celery configuration")  # type: ignore[arg-type]
+    opensearch: OpenSearchConfig = Field(default_factory=OpenSearchConfig, description="OpenSearch configuration")  # type: ignore[arg-type]
 
     model_config = SettingsConfigDict(
         env_file=".env",
