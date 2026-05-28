@@ -1,8 +1,14 @@
 from functools import lru_cache
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, NonNegativeInt, PositiveInt
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
+class OpenSearchIndexConfig(BaseModel):
+    """Configuration for OpenSearch index settings."""
+
+    number_of_shards: PositiveInt = Field(default=1, description="Number of shards for the OpenSearch index")
+    number_of_replicas: NonNegativeInt = Field(default=0, description="Number of replicas for the OpenSearch index")
 
 
 class OpenSearchConfig(BaseModel):
@@ -16,9 +22,10 @@ class OpenSearchConfig(BaseModel):
     ssl_assert_hostname: bool = Field(default=True, description="Assert hostname for SSL connection")
     ssl_show_warn: bool = Field(default=True, description="Show SSL warnings")
     http_compress: bool = Field(default=True, description="Enable HTTP compression for OpenSearch connection")
-    timeout: int = Field(default=30, description="Timeout for OpenSearch connection in seconds")
-    max_retries: int = Field(default=3, description="Maximum number of retries for OpenSearch connection")
+    timeout: PositiveInt = Field(default=30, description="Timeout for OpenSearch connection in seconds")
+    max_retries: NonNegativeInt = Field(default=3, description="Maximum number of retries for OpenSearch connection")
     retry_on_timeout: bool = Field(default=True, description="Retry on timeout for OpenSearch connection")
+    index_config: OpenSearchIndexConfig = Field(default_factory=OpenSearchIndexConfig, description="Configuration for OpenSearch index settings")
 
 
 class CeleryConfig(BaseModel):
@@ -30,8 +37,8 @@ class CeleryConfig(BaseModel):
     endpoint_url: str | None = Field(default=None, description="Custom endpoint URL for the broker")
     is_secure: bool | None = Field(default=None, description="Use SSL when connecting to the broker")
     region: str = Field(default="eu-central-1", description="AWS region for the broker")
-    visibility_timeout: int = Field(default=3600, description="Visibility timeout for tasks in seconds")
-    polling_interval: int = Field(default=5, description="Polling interval for the broker in seconds")
+    visibility_timeout: PositiveInt = Field(default=3600, description="Visibility timeout for tasks in seconds")
+    polling_interval: PositiveInt = Field(default=5, description="Polling interval for the broker in seconds")
     queue_name: str = Field(default="debugmate-queue", description="Name of the Celery task queue")
 
 
