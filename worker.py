@@ -1,6 +1,7 @@
 import datetime as dt
 
 from celery import Celery
+from kombu.utils.url import safequote
 
 from src.config.basic_config import get_config
 from src.config.logger import get_logger
@@ -12,15 +13,21 @@ config = get_config()
 logger = get_logger(__name__)
 
 broker_transport_options = {
-    "region": config.celery.region,
+    "region": config.aws.region,
     "visibility_timeout": config.celery.visibility_timeout,
     "polling_interval": config.celery.polling_interval,
 }
+
+# URL-encode ONLY for broker URL
+aws_access_key_encoded = safequote(config.aws.access_key_id)
+aws_secret_key_encoded = safequote(config.aws.secret_access_key)
 
 if config.environment != "local":
     broker_transport_options["predefined_queues"] = {
         config.celery.queue_name: {
             "url": config.celery.queue_url,
+            "access_key_id": config.aws.access_key_id,
+            "secret_access_key": config.aws.secret_access_key,
         },
     }
 
@@ -32,7 +39,7 @@ if config.celery.is_secure is not None:
 
 celery_app = Celery(
     config.celery.app_name,
-    broker=config.celery.broker_url,
+    broker=f"sqs://{aws_access_key_encoded}:{aws_secret_key_encoded}@",
 )
 
 celery_app.conf.update(
