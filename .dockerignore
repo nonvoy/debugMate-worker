@@ -1,0 +1,51 @@
+# Version control
+.git/
+.gitignore
+
+# Local virtual environment
+venv/
+.venv/
+
+# Docker build files
+dev/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.so
+
+# Test artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Linting / type checking
+.mypy_cache/
+.ruff_cache/
+mypy_report.xml
+ruff_report.txt
+
+# Environment files — never bake secrets into the image
+.env
+.env.*
+!.env.example
+
+# Dev-only config and tooling
+requirements-dev.txt
+pyproject.toml
+.pre-commit-config.yaml
+
+# Docs and legal
+README.md
+LICENSE
+
+# IDE
+.vscode/
+.idea/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
