@@ -18,11 +18,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY dependencies/requirements-base.txt .
-COPY dependencies/requirements-prod.txt .
+COPY dependencies/requirements-local.txt .
 
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip setuptools wheel \
-    && /opt/venv/bin/pip install -r requirements-prod.txt
+    && /opt/venv/bin/pip install -r requirements-local.txt
 
 
 FROM python:3.13-slim AS runtime

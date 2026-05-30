@@ -31,9 +31,9 @@ class OpenSearchConfig(BaseModel):
 class AWSConfig(BaseModel):
     """Configuration for AWS."""
 
-    access_key_id: str = Field(..., description="AWS access key ID")
-    secret_access_key: str = Field(..., description="AWS secret access key")
-    region: str = Field(default="eu-central-1", description="AWS region")
+    access_key_id: str | None = Field(default=None, description="AWS access key ID")
+    secret_access_key: str | None = Field(default=None, description="AWS secret access key")
+    region: str | None = Field(default=None, description="AWS region")
 
 
 class CeleryConfig(BaseModel):
@@ -41,12 +41,13 @@ class CeleryConfig(BaseModel):
 
     app_name: str = Field(default="debugmate-worker", description="Name of the Celery application")
     task_name: str = Field(default="analyze_events", description="Name of the Celery task to process events")
+    broker_url: str | None = Field(default=None, description="URL of the Celery broker (used only for local environment)")
     endpoint_url: str | None = Field(default=None, description="Custom endpoint URL for the broker")
     is_secure: bool | None = Field(default=None, description="Use SSL when connecting to the broker")
     visibility_timeout: PositiveInt = Field(default=3600, description="Visibility timeout for tasks in seconds")
     polling_interval: PositiveInt = Field(default=5, description="Polling interval for the broker in seconds")
     queue_name: str = Field(default="debugmate-queue", description="Name of the Celery task queue")
-    queue_url: str = Field(..., description="URL of the Celery task queue")
+    queue_url: str | None = Field(default=None, description="URL of the Celery task queue")
 
 
 class BasicConfig(BaseSettings):
@@ -55,9 +56,9 @@ class BasicConfig(BaseSettings):
     debug: bool = Field(default=False, description="Enable debug mode")
     log_level: str = Field(default="INFO", description="Logging level for the application")
     environment: str = Field(default="production", description="Environment in which the application is running")
-    celery: CeleryConfig = Field(default_factory=CeleryConfig, description="Celery configuration")  # type: ignore[arg-type]
+    celery: CeleryConfig = Field(default_factory=CeleryConfig, description="Celery configuration")
     opensearch: OpenSearchConfig = Field(default_factory=OpenSearchConfig, description="OpenSearch configuration")  # type: ignore[arg-type]
-    aws: AWSConfig = Field(default_factory=AWSConfig, description="AWS configuration")  # type: ignore[arg-type]
+    aws: AWSConfig = Field(default_factory=AWSConfig, description="AWS configuration")
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

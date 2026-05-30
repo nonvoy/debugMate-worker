@@ -30,3 +30,10 @@ module = ["tests.*"]
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = [
+    "celery",
+    "kombu.utils.url",
+]
+ignore_missing_imports = true
