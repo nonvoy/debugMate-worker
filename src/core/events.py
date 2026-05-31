@@ -20,13 +20,14 @@ def _create_fingerprint(event: Event, normalized_message: str) -> str:
     return hashlib.sha256(fingerprint_input.encode()).hexdigest()
 
 
-def normalize_event(event: Event, received_at: dt.datetime) -> NormalizedEvent:
+def normalize_event(event: dict, received_at: dt.datetime) -> NormalizedEvent:
     """Normalize an event by creating a NormalizedEvent instance with a normalized message and fingerprint."""
-    normalized_message = _normalize_event_message(event.message)
-    fingerprint = _create_fingerprint(event, normalized_message)
+    event_validated = Event.model_validate(event)
+    normalized_message = _normalize_event_message(event_validated.message)
+    fingerprint = _create_fingerprint(event_validated, normalized_message)
 
     return NormalizedEvent(
-        **event.model_dump(),
+        **event_validated.model_dump(),
         normalized_message=normalized_message,
         fingerprint=fingerprint,
         received_at=received_at,
