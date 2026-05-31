@@ -40,7 +40,7 @@ class CeleryConfig(BaseModel):
     """Configuration for Celery."""
 
     app_name: str = Field(default="debugmate-worker", description="Name of the Celery application")
-    task_name: str = Field(default="analyze_events", description="Name of the Celery task to process events")
+    task_name: str = Field(default="process_events", description="Name of the Celery task to process events")
     broker_url: str | None = Field(default=None, description="URL of the Celery broker (used only for local environment)")
     endpoint_url: str | None = Field(default=None, description="Custom endpoint URL for the broker")
     is_secure: bool | None = Field(default=None, description="Use SSL when connecting to the broker")
