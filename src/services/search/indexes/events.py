@@ -27,6 +27,7 @@ EVENTS_INDEX_BODY = {
             "timestamp": {"type": "date"},
             "published_at": {"type": "date"},
             "received_at": {"type": "date"},
+            "updated_at": {"type": "date"},
         }
     },
 }

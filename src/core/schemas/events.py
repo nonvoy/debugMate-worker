@@ -75,3 +75,4 @@ class NormalizedEvent(Event):
         examples=["123e4567-e89b-12d3-a456-426614174002"],
     )
     received_at: dt.datetime = Field(..., description="The timestamp when the event was received for processing", examples=["2024-06-01T12:10:00Z"])
+    updated_at: dt.datetime | None = Field(None, description="The timestamp when the event was last updated", examples=["2024-06-01T12:15:00Z"])

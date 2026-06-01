@@ -57,6 +57,9 @@ class OpenSearchClient:
 
     def index_events(self, events: list[NormalizedEvent]) -> int:
         """Indexes a list of normalized events into OpenSearch. Returns the number of successfully indexed events."""
+        if len(events) == 0:
+            return 0
+
         actions = [
             {
                 "_op_type": "index",
@@ -107,6 +110,9 @@ class OpenSearchClient:
 
     def index_incidents(self, incidents: list[Incident]) -> int:
         """Indexes a list of incidents into OpenSearch. Returns the number of successfully indexed incidents."""
+        if len(incidents) == 0:
+            return 0
+
         actions = [
             {
                 "_op_type": "index",
@@ -127,6 +133,44 @@ class OpenSearchClient:
             logger.error(f"Error indexing incidents: {e.info}")
         except Exception as e:
             logger.error(f"Unexpected error indexing incidents: {str(e)}")
+
+        return success_count
+
+    def update_events_with_incidents(self, incidents: list[Incident]) -> int:
+        """Updates events in OpenSearch to associate them with their corresponding incidents. Returns the number of successfully updated events."""
+        if len(incidents) == 0:
+            return 0
+
+        now = dt.datetime.now(dt.timezone.utc)
+        event_incident_map: dict[str, str] = {}
+        for incident in incidents:
+            for event_id in incident.events:
+                event_incident_map[str(event_id)] = str(incident.id)
+
+        actions = []
+        for event_document_id, incident_id in event_incident_map.items():
+            action = {
+                "_op_type": "update",
+                "_index": EVENTS_INDEX,
+                "_id": event_document_id,
+                "doc": {
+                    "incident_id": incident_id,
+                    "updated_at": now.isoformat(),
+                },
+            }
+            actions.append(action)
+
+        success_count = 0
+        try:
+            success_count, _ = bulk(
+                client=self.__client,
+                actions=actions,
+                raise_on_error=True,
+            )
+        except TransportError as e:
+            logger.error(f"Error updating events with incidents: {e.info}")
+        except Exception as e:
+            logger.error(f"Unexpected error updating events with incidents: {str(e)}")
 
         return success_count
 

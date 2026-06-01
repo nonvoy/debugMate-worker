@@ -24,3 +24,5 @@ def process_events(self, event_payload: list[dict]) -> None:
     logger.info(f"Indexed {indexed_event_count} events into OpenSearch")
     indexed_incident_count = opensearch_client.index_incidents(incidents)
     logger.info(f"Indexed {indexed_incident_count} incidents into OpenSearch")
+    update_event_count = opensearch_client.update_events_with_incidents(incidents)
+    logger.info(f"Updated {update_event_count} events with incident associations in OpenSearch")
