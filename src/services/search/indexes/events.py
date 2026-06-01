@@ -23,6 +23,7 @@ EVENTS_INDEX_BODY = {
             "normalized_message": {"type": "text"},
             "metadata": {"type": "object", "enabled": True},
             "fingerprint": {"type": "keyword"},
+            "incident_id": {"type": "keyword"},
             "timestamp": {"type": "date"},
             "published_at": {"type": "date"},
             "received_at": {"type": "date"},
