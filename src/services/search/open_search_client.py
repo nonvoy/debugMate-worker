@@ -7,7 +7,9 @@ from opensearchpy.helpers import bulk
 from src.config.basic_config import get_config
 from src.config.logger import get_logger
 from src.core.schemas.events import NormalizedEvent
+from src.core.schemas.incidents import Incident
 from src.services.search.indexes.events import EVENTS_INDEX, EVENTS_INDEX_BODY
+from src.services.search.indexes.incidents import INCIDENTS_INDEX, INCIDENTS_INDEX_BODY
 
 config = get_config()
 logger = get_logger(__name__)
@@ -33,6 +35,7 @@ class OpenSearchClient:
             http_auth=http_auth,
         )
         self.__create_events_index_if_not_exists()
+        self.__create_incidents_index_if_not_exists()
 
     def __create_events_index_if_not_exists(self) -> None:
         """Checks if the events index exists in OpenSearch, and creates it if it doesn't."""
@@ -41,6 +44,15 @@ class OpenSearchClient:
             self.__client.indices.create(
                 index=EVENTS_INDEX,
                 body=EVENTS_INDEX_BODY,
+            )
+
+    def __create_incidents_index_if_not_exists(self) -> None:
+        """Checks if the incidents index exists in OpenSearch, and creates it if it doesn't."""
+        exists = self.__client.indices.exists(index=INCIDENTS_INDEX)
+        if not exists:
+            self.__client.indices.create(
+                index=INCIDENTS_INDEX,
+                body=INCIDENTS_INDEX_BODY,
             )
 
     def index_events(self, events: list[NormalizedEvent]) -> int:
@@ -92,6 +104,31 @@ class OpenSearchClient:
             logger.error(f"Unexpected error fetching events: {str(e)}")
 
         return events
+
+    def index_incidents(self, incidents: list[Incident]) -> int:
+        """Indexes a list of incidents into OpenSearch. Returns the number of successfully indexed incidents."""
+        actions = [
+            {
+                "_op_type": "index",
+                "_index": INCIDENTS_INDEX,
+                "_id": str(incident.id),
+                "_source": incident.model_dump(mode="json"),
+            }
+            for incident in incidents
+        ]
+        success_count = 0
+        try:
+            success_count, _ = bulk(
+                client=self.__client,
+                actions=actions,
+                raise_on_error=True,
+            )
+        except TransportError as e:
+            logger.error(f"Error indexing incidents: {e.info}")
+        except Exception as e:
+            logger.error(f"Unexpected error indexing incidents: {str(e)}")
+
+        return success_count
 
 
 @lru_cache()
