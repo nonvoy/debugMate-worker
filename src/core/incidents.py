@@ -11,7 +11,7 @@ config = get_config()
 
 def _get_time_range(events: list[NormalizedEvent]) -> tuple[dt.datetime, dt.datetime]:
     """Get the minimum and maximum timestamps from the list of normalized events."""
-    timestamps = [event.received_at for event in events]
+    timestamps = [event.timestamp for event in events]
     min_timestamp = min(timestamps)
     max_timestamp = max(timestamps)
 
