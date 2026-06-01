@@ -50,6 +50,12 @@ class CeleryConfig(BaseModel):
     queue_url: str | None = Field(default=None, description="URL of the Celery task queue")
 
 
+class IncidentConfig(BaseModel):
+    time_interval: PositiveInt = Field(default=300, description="Time interval in seconds to group events into an incident")
+    fingerprint_threshold: int = Field(default=5, description="Minimum number of events with the same fingerprint to create an incident")
+    service_env_threshold: int = Field(default=10, description="Minimum number of events with the same service and environment to create an incident")
+
+
 class BasicConfig(BaseSettings):
     """Basic configuration for the application."""
 
@@ -59,6 +65,7 @@ class BasicConfig(BaseSettings):
     celery: CeleryConfig = Field(default_factory=CeleryConfig, description="Celery configuration")
     opensearch: OpenSearchConfig = Field(default_factory=OpenSearchConfig, description="OpenSearch configuration")  # type: ignore[arg-type]
     aws: AWSConfig = Field(default_factory=AWSConfig, description="AWS configuration")
+    incident: IncidentConfig = Field(default_factory=IncidentConfig, description="Incident configuration")
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

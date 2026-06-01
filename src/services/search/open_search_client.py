@@ -1,3 +1,4 @@
+import datetime as dt
 from functools import lru_cache
 
 from opensearchpy import OpenSearch, TransportError
@@ -67,6 +68,31 @@ class OpenSearchClient:
             success_count = 0
 
         return success_count
+
+    def fetch_events_for_given_timestamp_range(self, start_time: dt.datetime, end_time: dt.datetime) -> list[NormalizedEvent]:
+        """Returns events from OpenSearch in timestamp ascending order that occurred within the given timestamp range."""
+        events = []
+        query = {
+            "query": {
+                "range": {
+                    "timestamp": {
+                        "gte": start_time.isoformat(),
+                        "lte": end_time.isoformat(),
+                    }
+                }
+            },
+            "sort": [{"timestamp": {"order": "asc"}}],
+        }
+        try:
+            response = self.__client.search(index=EVENTS_INDEX, body=query)
+            hits = response.get("hits", {}).get("hits", [])
+            events = [NormalizedEvent.model_validate(hit["_source"]) for hit in hits]
+        except TransportError as e:
+            logger.error(f"Error fetching events: {e.info}")
+        except Exception as e:
+            logger.error(f"Unexpected error fetching events: {str(e)}")
+
+        return events
 
 
 @lru_cache()
