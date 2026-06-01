@@ -70,7 +70,7 @@ class OpenSearchClient:
         return success_count
 
     def fetch_events_for_given_timestamp_range(self, start_time: dt.datetime, end_time: dt.datetime) -> list[NormalizedEvent]:
-        """Returns events from OpenSearch in timestamp ascending order that occurred within the given timestamp range."""
+        """Fetches events from OpenSearch that occurred within the given timestamp range."""
         events = []
         query = {
             "query": {
@@ -81,7 +81,6 @@ class OpenSearchClient:
                     }
                 }
             },
-            "sort": [{"timestamp": {"order": "asc"}}],
         }
         try:
             response = self.__client.search(index=EVENTS_INDEX, body=query)
