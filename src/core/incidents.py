@@ -2,7 +2,7 @@ import datetime as dt
 import uuid
 
 from src.config.basic_config import get_config
-from src.core.schemas.events import NormalizedEvent
+from src.core.schemas.events import NormalizedEvent, Severity
 from src.core.schemas.incidents import Incident, IncidentType
 from src.services.search.open_search_client import OpenSearchClient
 
@@ -184,6 +184,9 @@ def check_for_incidents(opensearch_client: OpenSearchClient, normalized_events: 
 
     # Drop events that are already associated with an incident, since they have already been processed
     no_incidents_events = [event for event in all_events if event.incident_id is None]
+
+    # Drop events that are not "error" or "critical"
+    no_incidents_events = [event for event in no_incidents_events if event.severity in {Severity.error, Severity.critical}]
 
     # Sort events by timestamp in ascending order
     no_incidents_events.sort(key=lambda event: event.timestamp)
