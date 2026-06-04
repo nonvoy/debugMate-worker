@@ -1,3 +1,5 @@
 opensearch-py==3.1.0
 pydantic==2.13.4
 pydantic-settings==2.12.0
+sqlmodel==0.0.38
+psycopg2-binary==2.9.12

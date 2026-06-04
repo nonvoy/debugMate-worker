@@ -51,6 +51,8 @@ class CeleryConfig(BaseModel):
 
 
 class IncidentConfig(BaseModel):
+    """Configuration for incident management."""
+
     time_interval: PositiveInt = Field(default=300, description="Time interval in seconds to group events into an incident")
     fingerprint_threshold: int = Field(default=5, description="Minimum number of events with the same fingerprint to create an incident")
     service_env_threshold: int = Field(default=10, description="Minimum number of events with the same service and environment to create an incident")
@@ -66,6 +68,7 @@ class BasicConfig(BaseSettings):
     opensearch: OpenSearchConfig = Field(default_factory=OpenSearchConfig, description="OpenSearch configuration")  # type: ignore[arg-type]
     aws: AWSConfig = Field(default_factory=AWSConfig, description="AWS configuration")
     incident: IncidentConfig = Field(default_factory=IncidentConfig, description="Incident configuration")
+    db_url: str = Field(..., description="URL of the PostgreSQL database")
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -76,4 +79,4 @@ class BasicConfig(BaseSettings):
 @lru_cache()
 def get_config() -> BasicConfig:
     """Returns the basic configuration for the application."""
-    return BasicConfig()
+    return BasicConfig()  # type: ignore[call-arg]
