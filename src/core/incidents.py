@@ -70,6 +70,7 @@ def _identify_incidents_by_sliding_window(incident_type: IncidentType, events: l
             continue
 
         # Enough events in the current window to create an incident
+        now = dt.datetime.now(dt.timezone.utc)
         incident = Incident(
             id=uuid.uuid4(),
             type=incident_type,
@@ -79,8 +80,8 @@ def _identify_incidents_by_sliding_window(incident_type: IncidentType, events: l
             events={event.id for event in win_events},
             start_time=win_start_time,
             end_time=win_end_time,
-            created_at=dt.datetime.now(dt.timezone.utc),
-            updated_at=dt.datetime.now(dt.timezone.utc),
+            created_at=now,
+            updated_at=now,
         )
         incidents.append(incident)
 
@@ -104,6 +105,7 @@ def _identify_incidents_by_fingerprint(grouped_events: dict[str, list[Normalized
         time_diff = end_time - start_time
         if time_diff <= dt.timedelta(seconds=config.incident.time_interval):
             # All events with the same fingerprint occurred within the time interval, create an incident
+            now = dt.datetime.now(dt.timezone.utc)
             incident = Incident(
                 id=uuid.uuid4(),
                 type=IncidentType.fingerprint,
@@ -113,8 +115,8 @@ def _identify_incidents_by_fingerprint(grouped_events: dict[str, list[Normalized
                 events={event.id for event in events},
                 start_time=start_time,
                 end_time=end_time,
-                created_at=dt.datetime.now(dt.timezone.utc),
-                updated_at=dt.datetime.now(dt.timezone.utc),
+                created_at=now,
+                updated_at=now,
             )
             incidents.append(incident)
             continue
@@ -151,6 +153,7 @@ def _identify_incidents_by_environment_and_service(
         time_diff = end_time - start_time
         if time_diff <= dt.timedelta(seconds=config.incident.time_interval):
             # All events with the same environment and service occurred within the time interval, create an incident
+            now = dt.datetime.now(dt.timezone.utc)
             incident = Incident(
                 id=uuid.uuid4(),
                 type=IncidentType.environment_service,
@@ -160,8 +163,8 @@ def _identify_incidents_by_environment_and_service(
                 events={event.id for event in events},
                 start_time=start_time,
                 end_time=end_time,
-                created_at=dt.datetime.now(dt.timezone.utc),
-                updated_at=dt.datetime.now(dt.timezone.utc),
+                created_at=now,
+                updated_at=now,
             )
             incidents.append(incident)
             continue
