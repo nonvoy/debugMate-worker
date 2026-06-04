@@ -6,10 +6,10 @@ from opensearchpy.helpers import bulk
 
 from src.config.basic_config import get_config
 from src.config.logger import get_logger
+from src.core.model.events import EVENTS_INDEX, EVENTS_INDEX_BODY
+from src.core.model.incidents import INCIDENTS_INDEX, INCIDENTS_INDEX_BODY
 from src.core.schemas.events import NormalizedEvent
 from src.core.schemas.incidents import Incident
-from src.services.search.indexes.events import EVENTS_INDEX, EVENTS_INDEX_BODY
-from src.services.search.indexes.incidents import INCIDENTS_INDEX, INCIDENTS_INDEX_BODY
 
 config = get_config()
 logger = get_logger(__name__)
