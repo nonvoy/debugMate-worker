@@ -69,10 +69,5 @@ class NormalizedEvent(Event):
         description="The fingerprint of the event used for grouping similar events",
         examples=["031edd7d41651593c5fe5c006fa5752b37fddff7bc4e843aa6af0c950f4b9406"],
     )
-    incident_id: UUID | None = Field(
-        None,
-        description="The unique identifier of the incident this event is associated with (if any)",
-        examples=["123e4567-e89b-12d3-a456-426614174002"],
-    )
     received_at: dt.datetime = Field(..., description="The timestamp when the event was received for processing", examples=["2024-06-01T12:10:00Z"])
     updated_at: dt.datetime | None = Field(None, description="The timestamp when the event was last updated", examples=["2024-06-01T12:15:00Z"])

@@ -70,7 +70,6 @@ def test_normalize_event_validates_and_enriches_payload() -> None:
     assert normalized_event.event_type == "application_log"
     assert normalized_event.normalized_message == "user <email> failed login from <ip> in <number> ms"
     assert normalized_event.received_at == received_at
-    assert normalized_event.incident_id is None
     assert normalized_event.updated_at is None
 
 

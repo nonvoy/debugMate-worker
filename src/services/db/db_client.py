@@ -1,14 +1,75 @@
-from collections.abc import Generator
+from functools import lru_cache
+from uuid import UUID
 
-from sqlmodel import Session, create_engine
+from sqlalchemy.exc import IntegrityError
+from sqlmodel import Session, SQLModel, col, create_engine, select
 
 from src.config.basic_config import get_config
+from src.config.logger import get_logger
+from src.core.model.incidents import EventsInIncident, Incident
+from src.core.schemas.events import NormalizedEvent
+from src.core.schemas.incidents import Incident as IncidentSchema
 
 config = get_config()
+logger = get_logger(__name__)
 
-engine = create_engine(config.db_url)
+
+class DBClient:
+    """Singleton class to manage database operations."""
+
+    def __init__(self):
+        self.engine = create_engine(config.db_url)
+        SQLModel.metadata.create_all(self.engine)
+
+    def return_uuids_of_events_with_incidents(self, events: list[NormalizedEvent]) -> set[UUID]:
+        """Returns a set of UUIDs of events that are already associated with an incident."""
+        with Session(self.engine) as session:
+            event_ids = [event.id for event in events]
+            statement = select(EventsInIncident.event_id).where(col(EventsInIncident.event_id).in_(event_ids))
+            result = session.exec(statement).all()
+            return set(result)
+
+    def save_incident(self, incident: IncidentSchema) -> int | None:
+        """Saves a single incident and its associated events to the database.
+        Returns the ID of the saved incident or None if saving failed.
+        """
+        with Session(self.engine) as session:
+            try:
+                db_incident = Incident(**incident.model_dump(exclude={"events"}))
+                session.add(db_incident)
+                session.flush()  # Flush to get the generated ID for the incident
+                incident_id = db_incident.id
+                events_in_incident = [
+                    EventsInIncident(
+                        incident_id=incident_id,
+                        event_id=event_id,
+                        associated_at=db_incident.created_at,
+                    )
+                    for event_id in incident.events
+                ]
+                session.add_all(events_in_incident)
+                session.commit()
+            except IntegrityError as e:
+                logger.error(f"Failed to save incident due to integrity error: {e}")
+                session.rollback()
+                return None
+
+        logger.info(f"Saved incident {incident_id} with {len(events_in_incident)} associated events to the database")
+        return incident_id
+
+    def save_incidents(self, incidents: list[IncidentSchema]) -> list[int]:
+        """Saves multiple incidents and their associated events to the database.
+        Returns a list of IDs of the saved incidents.
+        """
+        saved_incident_ids = []
+        for incident in incidents:
+            incident_id = self.save_incident(incident)
+            if incident_id is not None:
+                saved_incident_ids.append(incident_id)
+        return saved_incident_ids
 
 
-def get_session() -> Generator[Session, None, None]:
-    with Session(engine) as session:
-        yield session
+@lru_cache()
+def get_db_client() -> DBClient:
+    """Returns a singleton instance of the DBClient."""
+    return DBClient()

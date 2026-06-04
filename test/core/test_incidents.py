@@ -23,6 +23,15 @@ class FakeOpenSearchClient:
         return self.later_events
 
 
+class FakeDBClient:
+    def __init__(self, event_ids_with_incidents: set[UUID]) -> None:
+        self.event_ids_with_incidents = event_ids_with_incidents
+
+    def return_uuids_of_events_with_incidents(self, events: list[NormalizedEvent]) -> set[UUID]:
+        event_ids = {event.id for event in events}
+        return self.event_ids_with_incidents & event_ids
+
+
 @pytest.fixture(autouse=True)
 def incident_config(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(incidents.config.incident, "time_interval", 300)
@@ -117,8 +126,8 @@ def test_identify_incidents_by_fingerprint_creates_incident_when_threshold_is_me
     incident = detected[0]
     assert incident.type == IncidentType.fingerprint
     assert incident.fingerprint == "fingerprint-a"
-    assert incident.environment is None
-    assert incident.service is None
+    assert incident.environment == "production"
+    assert incident.service == "auth-service"
     assert incident.events == {event.id for event in events}
     assert incident.start_time == BASE_TIME
     assert incident.end_time == BASE_TIME + dt.timedelta(seconds=120)
@@ -134,8 +143,8 @@ def test_identify_incidents_by_environment_and_service_excludes_events_in_detect
         id=uuid4(),
         type=IncidentType.fingerprint,
         fingerprint="fingerprint-a",
-        environment=None,
-        service=None,
+        environment="production",
+        service="auth-service",
         events={first.id, second.id},
         start_time=first.timestamp,
         end_time=second.timestamp,
@@ -162,8 +171,9 @@ def test_check_for_incidents_fetches_neighboring_events_and_filters_processed_or
         earlier_events=[earlier],
         later_events=[later, low_severity, already_processed],
     )
+    db_client = FakeDBClient(event_ids_with_incidents={already_processed.id})
 
-    detected = incidents.check_for_incidents(opensearch_client, [current])
+    detected = incidents.check_for_incidents(opensearch_client, db_client, [current])
 
     assert opensearch_client.calls == [
         (current.timestamp - dt.timedelta(seconds=300), current.timestamp),

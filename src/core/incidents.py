@@ -4,6 +4,7 @@ import uuid
 from src.config.basic_config import get_config
 from src.core.schemas.events import NormalizedEvent, Severity
 from src.core.schemas.incidents import Incident, IncidentType
+from src.services.db.db_client import DBClient
 from src.services.search.open_search_client import OpenSearchClient
 
 config = get_config()
@@ -47,13 +48,12 @@ def _identify_incidents_by_sliding_window(incident_type: IncidentType, events: l
     if incident_type == IncidentType.fingerprint:
         incident_threshold = config.incident.fingerprint_threshold
         fingerprint = events[0].fingerprint
-        environment = None
-        service = None
     else:
         incident_threshold = config.incident.service_env_threshold
         fingerprint = None
-        environment = events[0].environment
-        service = events[0].service
+
+    environment = events[0].environment
+    service = events[0].service
 
     # Slide window through the events to check for incidents within the time window
     win_start_time = events[0].timestamp
@@ -72,7 +72,6 @@ def _identify_incidents_by_sliding_window(incident_type: IncidentType, events: l
         # Enough events in the current window to create an incident
         now = dt.datetime.now(dt.timezone.utc)
         incident = Incident(
-            id=uuid.uuid4(),
             type=incident_type,
             fingerprint=fingerprint,
             environment=environment,
@@ -106,12 +105,13 @@ def _identify_incidents_by_fingerprint(grouped_events: dict[str, list[Normalized
         if time_diff <= dt.timedelta(seconds=config.incident.time_interval):
             # All events with the same fingerprint occurred within the time interval, create an incident
             now = dt.datetime.now(dt.timezone.utc)
+            environment = events[0].environment
+            service = events[0].service
             incident = Incident(
-                id=uuid.uuid4(),
                 type=IncidentType.fingerprint,
                 fingerprint=fingerprint,
-                environment=None,
-                service=None,
+                environment=environment,
+                service=service,
                 events={event.id for event in events},
                 start_time=start_time,
                 end_time=end_time,
@@ -155,7 +155,6 @@ def _identify_incidents_by_environment_and_service(
             # All events with the same environment and service occurred within the time interval, create an incident
             now = dt.datetime.now(dt.timezone.utc)
             incident = Incident(
-                id=uuid.uuid4(),
                 type=IncidentType.environment_service,
                 fingerprint=None,
                 environment=environment,
@@ -174,7 +173,7 @@ def _identify_incidents_by_environment_and_service(
     return incidents
 
 
-def check_for_incidents(opensearch_client: OpenSearchClient, normalized_events: list[NormalizedEvent]) -> list[Incident]:
+def check_for_incidents(opensearch_client: OpenSearchClient, db_client: DBClient, normalized_events: list[NormalizedEvent]) -> list[Incident]:
     """Checks for potential incidents based on the normalized events and creates incidents if detected."""
     min_timestamp, max_timestamp = _get_time_range(normalized_events)
     earlier_events = opensearch_client.fetch_events_for_given_timestamp_range(
@@ -185,11 +184,12 @@ def check_for_incidents(opensearch_client: OpenSearchClient, normalized_events: 
     )
     all_events = earlier_events + normalized_events + later_events
 
-    # Drop events that are already associated with an incident, since they have already been processed
-    no_incidents_events = [event for event in all_events if event.incident_id is None]
-
     # Drop events that are not "error" or "critical"
-    no_incidents_events = [event for event in no_incidents_events if event.severity in {Severity.error, Severity.critical}]
+    all_events = [event for event in all_events if event.severity in {Severity.error, Severity.critical}]
+
+    # Drop events that are already associated with an incident, since they have already been processed
+    uuid_of_events_with_incidents = db_client.return_uuids_of_events_with_incidents(all_events)
+    no_incidents_events = [event for event in all_events if event.id not in uuid_of_events_with_incidents]
 
     # Sort events by timestamp in ascending order
     no_incidents_events.sort(key=lambda event: event.timestamp)
