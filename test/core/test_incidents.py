@@ -131,6 +131,9 @@ def test_identify_incidents_by_fingerprint_creates_incident_when_threshold_is_me
     assert incident.events == {event.id for event in events}
     assert incident.start_time == BASE_TIME
     assert incident.end_time == BASE_TIME + dt.timedelta(seconds=120)
+    assert incident.status == "open"
+    assert incident.comment is None
+    assert incident.assigned_to is None
 
 
 def test_identify_incidents_by_environment_and_service_excludes_events_in_detected_incidents() -> None:

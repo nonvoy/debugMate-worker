@@ -6,7 +6,7 @@ from sqlalchemy import Column, DateTime
 from sqlmodel import Field, SQLModel
 
 from src.config.basic_config import get_config
-from src.core.schemas.incidents import IncidentType
+from src.core.schemas.incidents import IncidentStatus, IncidentType
 
 config = get_config()
 
@@ -31,6 +31,9 @@ class Incident(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), nullable=False),
         description="The date and time when the incident ended.",
     )
+    status: IncidentStatus = Field(default=IncidentStatus.OPEN, description="The current status of the incident.", nullable=False)
+    comment: str | None = Field(None, description="An optional comment providing additional information about the incident.", nullable=True)
+    assigned_to: str | None = Field(None, description="The name of the person or team assigned to handle the incident.", nullable=True)
     created_at: dt.datetime = Field(
         ...,
         sa_column=Column(DateTime(timezone=True), nullable=False),
