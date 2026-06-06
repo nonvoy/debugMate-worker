@@ -1,0 +1,8 @@
+from functools import lru_cache
+
+from openai import OpenAI
+
+
+@lru_cache
+def get_openai_client() -> OpenAI:
+    return OpenAI()
