@@ -2,11 +2,11 @@ import datetime as dt
 from uuid import UUID
 
 from pydantic import PositiveInt
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Column, DateTime, UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 from src.config.basic_config import get_config
-from src.core.schemas.incidents import IncidentStatus, IncidentType
+from src.core.schemas.incidents import IncidentStatus, IncidentType, LLMResponseConfidence
 
 config = get_config()
 
@@ -59,4 +59,43 @@ class EventsInIncident(SQLModel, table=True):
         ...,
         sa_column=Column(DateTime(timezone=True), nullable=False),
         description="The date and time when the event was associated with the incident.",
+    )
+
+
+class IncidentAnalysis(SQLModel, table=True):
+    """Model representing the analysis of an incident."""
+
+    __tablename__ = "incident_analyses"
+
+    task_id: UUID = Field(
+        ...,
+        description="The unique identifier of the analysis task (if applicable).",
+        nullable=False,
+    )
+    incident_id: PositiveInt = Field(
+        ...,
+        foreign_key="incidents.id",
+        nullable=False,
+        description="The unique identifier of the incident being analyzed.",
+    )
+    summary: str = Field(..., description="A concise summary of the incident analysis.", nullable=False)
+    root_cause: str = Field(..., description="The most likely root cause of the incident.", nullable=False)
+    confidence: LLMResponseConfidence = Field(..., description="The confidence level of the analysis.", nullable=False)
+    recommendations: list[str] = Field(
+        ...,
+        description="A list of recommended actions to address the incident.",
+        nullable=False,
+    )
+    created_at: dt.datetime = Field(
+        ...,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+        description="The date and time when the incident analysis was created.",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "task_id",
+            "incident_id",
+            name="uq_task_id_incident_id",
+        ),
     )

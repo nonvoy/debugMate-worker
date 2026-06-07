@@ -32,3 +32,15 @@ def normalize_event(event: dict, received_at: dt.datetime) -> NormalizedEvent:
         fingerprint=fingerprint,
         received_at=received_at,
     )
+
+
+def group_normalized_messages(normalized_events: list[NormalizedEvent]) -> dict[str, list[str]]:
+    """Group normalized events by their hashed normalized message."""
+    grouped_events = {}
+    for event in normalized_events:
+        message_hash = hashlib.sha256(event.normalized_message.encode()).hexdigest()
+        if message_hash not in grouped_events:
+            grouped_events[message_hash] = []
+        grouped_events[message_hash].append(event.normalized_message)
+
+    return grouped_events

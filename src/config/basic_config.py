@@ -40,7 +40,6 @@ class CeleryConfig(BaseModel):
     """Configuration for Celery."""
 
     app_name: str = Field(default="debugmate-worker", description="Name of the Celery application")
-    task_name: str = Field(default="process_events", description="Name of the Celery task to process events")
     broker_url: str | None = Field(default=None, description="URL of the Celery broker (used only for local environment)")
     endpoint_url: str | None = Field(default=None, description="Custom endpoint URL for the broker")
     is_secure: bool | None = Field(default=None, description="Use SSL when connecting to the broker")
@@ -58,6 +57,13 @@ class IncidentConfig(BaseModel):
     service_env_threshold: int = Field(default=10, description="Minimum number of events with the same service and environment to create an incident")
 
 
+class OpenAIConfig(BaseModel):
+    """Configuration for OpenAI."""
+
+    model_name: str = Field(default="gpt-5.4", description="Name of the OpenAI model to use for analysis")
+    api_key: str | None = Field(default=None, description="API key for OpenAI authentication")
+
+
 class BasicConfig(BaseSettings):
     """Basic configuration for the application."""
 
@@ -68,6 +74,7 @@ class BasicConfig(BaseSettings):
     opensearch: OpenSearchConfig = Field(default_factory=OpenSearchConfig, description="OpenSearch configuration")  # type: ignore[arg-type]
     aws: AWSConfig = Field(default_factory=AWSConfig, description="AWS configuration")
     incident: IncidentConfig = Field(default_factory=IncidentConfig, description="Incident configuration")
+    openai: OpenAIConfig = Field(default_factory=OpenAIConfig, description="OpenAI configuration")
     db_url: str = Field(..., description="URL of the PostgreSQL database")
     model_config = SettingsConfigDict(
         env_file=".env",

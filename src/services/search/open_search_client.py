@@ -96,6 +96,30 @@ class OpenSearchClient:
 
         return events
 
+    def get_events(self, event_ids: set[str]) -> list[NormalizedEvent]:
+        """Fetches events from OpenSearch based on a set of event IDs."""
+        events = []
+        if not event_ids:
+            return events
+
+        query = {
+            "query": {
+                "ids": {
+                    "values": list(event_ids),
+                }
+            }
+        }
+        try:
+            response = self.__client.search(index=EVENTS_INDEX, body=query)
+            hits = response.get("hits", {}).get("hits", [])
+            events = [NormalizedEvent.model_validate(hit["_source"]) for hit in hits]
+        except TransportError as e:
+            logger.error(f"Error fetching events by IDs: {e.info}")
+        except Exception as e:
+            logger.error(f"Unexpected error fetching events by IDs: {str(e)}")
+
+        return events
+
 
 @lru_cache()
 def get_opensearch_client() -> OpenSearchClient:
